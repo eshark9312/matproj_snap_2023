@@ -1,5 +1,6 @@
+__pycache__
 db_rar/bs_bundle/
 db_rar/dos_bundle/
 db_rar/pdos_bundle/
-db_rar/phonon_bundle/
+# db_rar/phonon_bundle/
 db_rar/.orig_backup/
