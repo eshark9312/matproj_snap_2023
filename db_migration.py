@@ -25,37 +25,42 @@ class Matproj_db_migrator :
         self.db = self.client.matproj
         return
 
-    def _read_json_data_from_file(self, fp : Union[BinaryIO, TextIO]) -> list:
-        json_list = []
-        json_lines = fp.readlines()
-        for line in json_lines:
-            json_data = json.loads(line)
-            del json_data['_id']
-            json_list.append(json_data)
-        return json_list
-
     def add_data_to_db(self,
             path_to_file : str,
             dataType : ExportTypes,
             collection : Collection,
-            from_scratch : bool = False
+            from_scratch : bool = False,
+            add_by_docs_num : int = 1000
     ) -> None:
         """
             This function reads data from file and add those into db
         """
         if from_scratch:
             collection.drop()
+        f = None
         match dataType:
             case ExportTypes.Json:
-                with open(path_to_file, 'r') as f:
-                    json_data = self._read_json_data_from_file(f)
-                    collection.insert_many(json_data)
+                f = open(path_to_file, 'r')
             case ExportTypes.Gzip:
-                with gzip.open(path_to_file, 'rb') as f:
-                    json_data = self._read_json_data_from_file(f)
-                    collection.insert_many(json_data)
+                f = gzip.open(path_to_file, 'rb')
             case _:
                 print("Unsupported file type of data")
+                return
+        json_list = []
+        num_docs = 0
+        for line in f:
+            num_docs += 1
+            print(f"Number of Imported Documents : {num_docs}\r", end="")
+            json_data = json.loads(line)
+            del json_data['_id']
+            json_list.append(json_data)
+            if len(json_list) == add_by_docs_num:
+                collection.insert_many(json_list)
+                json_list = []
+        if len(json_list) > 0:
+            collection.insert_many(json_list)
+        f.close()
+        print("")
         return
 
 def migrate_props(path2props_dir : str) -> None :
@@ -97,7 +102,7 @@ def migrate_bundles(path2dir : str, col: Bundle_col = Bundle_col.Bandstructure, 
 def main() : 
     # migrate several props data
     path2props_dir = 'db_rar/'
-    #migrate_props(path2props_dir)
+    migrate_props(path2props_dir)
     
     # migrate bandstrcture data
     path2bs_dir = 'db_rar/bs_bundle/'
@@ -105,9 +110,7 @@ def main() :
     path2pdos_dir = 'db_rar/pdos_bundle/'
     #migrate_bundles(path2dir = path2bs_dir, col = Bundle_col.Bandstructure, bundles_list=[0,1])
     #migrate_bundles(path2dir = path2dos_dir, col = Bundle_col.DOS, bundles_list=[0,1])
-    migrate_bundles(path2dir = path2pdos_dir, col = Bundle_col.PDOSN, bundles_list=[0,1])
-
-    #migrate_props(path2props_dir=path2props_dir)
+    migrate_bundles(path2dir = path2pdos_dir, col = Bundle_col.PDOS, bundles_list=[0,1])
 
 if __name__ == "__main__":
     main()
