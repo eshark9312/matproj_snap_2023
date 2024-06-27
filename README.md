@@ -1,5 +1,7 @@
 
 This repo contains materials project database on Mongodb, python modules for plotting and self-developed python scripts for local implementation of DB and explorer. 
+## Database storage
+- collections  [https://drive.google.com/drive/folders/1fuTplEYg7iEyend1vyCPkCgUFJ90Az20]
 
 ## How to set up repo on windows machine
 - Set up python3.11+
